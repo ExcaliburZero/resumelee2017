@@ -11,22 +11,40 @@ import Data.Word
 -- | Encrypts the given file and splits it into the given number of parts.
 encryptFile :: FilePath -> Int -> IO ()
 encryptFile file pieces = do
-  _ <- putStrLn $ "Cryptifying file: " ++ file
+  _ <- putStrLn $ "Encrypting file: " ++ file
   contents <- BS.unpack <$> BS.readFile file
   let invContents = map invertByte contents
   let broken      = breakUpFile invContents pieces
   let rBroken     = fmap (map reverse) broken
-  _ <- case rBroken of
+  case rBroken of
     Just a  -> writeParts file a pieces
     Nothing -> return ()
-  return ()
+
+decryptFile :: FilePath -> Int -> IO ()
+decryptFile file pieces = do
+  _ <- putStrLn $ "Decrypting file: " ++ file
+  eContents <- readParts file pieces
+  let broken = map reverse eContents
+  let invContents = unBreakFile broken pieces
+  let parts = map invertByte invContents
+  let contents = BS.pack parts
+  BS.writeFile file contents
+
+pieceNames :: FilePath -> Int -> [FilePath]
+pieceNames file pieces = map (((file ++ ".part") ++) . show) [1..pieces]
 
 -- | Writes the given parts to files.
 writeParts :: FilePath -> [[Word8]] -> Int -> IO ()
 writeParts file parts pieces = do
   let bParts = map BS.pack parts
-  let fNames = map (((file ++ ".part") ++) . show) [1..pieces]
+  let fNames = pieceNames file pieces
   zipWithM_ BS.writeFile fNames bParts
+
+readParts :: FilePath -> Int -> IO ([[Word8]])
+readParts file pieces = do
+  let fileNames = pieceNames file pieces
+  files <- mapM BS.readFile fileNames
+  return $ map BS.unpack files
 
 -- | Breaks up the given String into n number of pieces.
 --
@@ -42,6 +60,9 @@ breakUpFile f n
     chunks  = chunksOf nChunks f
     nChunks = (fLength `div` n) + (if fLength `mod` n == 0 then 0 else 1)
     fLength = length f
+
+unBreakFile :: [[a]] -> Int -> [a]
+unBreakFile broken pieces = foldl (++) [] broken
 
 -- | Inverts the given byte.
 --
