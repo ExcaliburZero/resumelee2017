@@ -6,7 +6,7 @@ import Data.List.Split (chunksOf)
 import Data.Word
 
 -- $setup
--- >> import Test.QuickCheck
+-- >>> import Test.QuickCheck
 
 -- | Encrypts the given file and splits it into the given number of parts.
 encryptFile :: FilePath -> Int -> IO ()
@@ -20,16 +20,23 @@ encryptFile file pieces = do
     Just a  -> writeParts file a pieces
     Nothing -> return ()
 
+-- | Decrypts the given file from its parts.
 decryptFile :: FilePath -> Int -> IO ()
 decryptFile file pieces = do
   _ <- putStrLn $ "Decrypting file: " ++ file
   eContents <- readParts file pieces
   let broken = map reverse eContents
-  let invContents = unBreakFile broken pieces
+  let invContents = unBreakFile broken
   let parts = map invertByte invContents
   let contents = BS.pack parts
   BS.writeFile file contents
 
+-- | Generates the piece file names for the given file and number of pieces.
+-- 
+-- >>> pieceNames "a.txt" 2
+-- ["a.txt.part1","a.txt.part2"]
+--
+-- prop> \(s, n) -> if n > -1 then length (pieceNames s n) == n else True
 pieceNames :: FilePath -> Int -> [FilePath]
 pieceNames file pieces = map (((file ++ ".part") ++) . show) [1..pieces]
 
@@ -40,7 +47,8 @@ writeParts file parts pieces = do
   let fNames = pieceNames file pieces
   zipWithM_ BS.writeFile fNames bParts
 
-readParts :: FilePath -> Int -> IO ([[Word8]])
+-- | Reads in the part files.
+readParts :: FilePath -> Int -> IO [[Word8]]
 readParts file pieces = do
   let fileNames = pieceNames file pieces
   files <- mapM BS.readFile fileNames
@@ -61,8 +69,12 @@ breakUpFile f n
     nChunks = (fLength `div` n) + (if fLength `mod` n == 0 then 0 else 1)
     fLength = length f
 
-unBreakFile :: [[a]] -> Int -> [a]
-unBreakFile broken pieces = foldl (++) [] broken
+-- | Takes a broken file and pieces it back together.
+--
+-- >>> unBreakFile ["123","45","67"]
+-- "1234567"
+unBreakFile :: [[a]] -> [a]
+unBreakFile = foldl (++) []
 
 -- | Inverts the given byte.
 --
