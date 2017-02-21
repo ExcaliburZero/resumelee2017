@@ -20,9 +20,3 @@ readInt :: String -> Either String Int
 readInt s = case readMaybe s :: Maybe Int of
   Just a  -> Right a
   Nothing -> Left $ s ++ " is not an integer."
-
---main = do
---  args <- getArgs
---  let file = head args
---  let pieces = read (args !! 1) :: Int
---  encryptFile file pieces

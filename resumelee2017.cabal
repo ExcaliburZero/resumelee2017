@@ -1,7 +1,7 @@
 name:                resumelee2017
 version:             0.1.0
-synopsis:            Initial project template from stack, using hspec and quickcheck
-description:         Please see README.md
+synopsis:            My entry for BSides Roc 2017 Resumelee
+description:         My entry for BSides Roc 2017 Resumelee
 homepage:            https://github.com/ExcaliburZero/resumelee2017
 license:             MIT
 license-file:        LICENSE

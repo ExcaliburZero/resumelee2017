@@ -26,7 +26,7 @@ decryptFile file pieces = do
   _ <- putStrLn $ "Decrypting file: " ++ file
   eContents <- readParts file pieces
   let broken = map reverse eContents
-  let invContents = unBreakFile broken
+  let invContents = concat broken
   let parts = map invertByte invContents
   let contents = BS.pack parts
   BS.writeFile file contents
@@ -68,13 +68,6 @@ breakUpFile f n
     chunks  = chunksOf nChunks f
     nChunks = (fLength `div` n) + (if fLength `mod` n == 0 then 0 else 1)
     fLength = length f
-
--- | Takes a broken file and pieces it back together.
---
--- >>> unBreakFile ["123","45","67"]
--- "1234567"
-unBreakFile :: [[a]] -> [a]
-unBreakFile = foldl (++) []
 
 -- | Inverts the given byte.
 --
